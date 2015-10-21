@@ -14,23 +14,12 @@ public class SocketServer {
             ServerSocket sock = new ServerSocket(2323);
             while(true){
                 Socket s=sock.accept();
-                ObjectOutputStream oos = new ObjectOutputStream(s.getOutputStream());
-                ObjectInputStream ois = new ObjectInputStream(s.getInputStream());
-                Command cmd;
-                try {
-                    cmd=(Command) ois.readObject();
-                    LOGGER.debug("received command:"+cmd.serial);
-                    CommandProcessor cmdp=new CommandProcessor(server,cmd);
-                    cmdp.run();
-                    CommandResult res=cmdp.result;                    
-                    oos.writeObject(res);
-                    oos.flush();
-                    s.close();
-                } catch (Exception ex) {
-                    LOGGER.error(ex);
-                }                    
-            }
-        }catch (IOException ex) {
+                ServerThread serverThread=new ServerThread(server,s);
+                Thread thr=new Thread(serverThread);
+                thr.start();
+                //cmdp.run();
+            }            
+        }catch (Exception ex) {
            LOGGER.error(ex);
         }
     }
