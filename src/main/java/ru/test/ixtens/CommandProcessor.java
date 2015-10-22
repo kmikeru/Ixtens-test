@@ -1,34 +1,27 @@
 package ru.test.ixtens;
-import java.io.EOFException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.net.Socket;
 import org.apache.log4j.Logger;
-import static ru.test.ixtens.SocketServer.LOGGER;
+
 
 /** @author mike */
 public class CommandProcessor implements Runnable{
-    final static Logger LOGGER = Logger.getLogger(CommandProcessor.class);
-    Server server;
+    final static Logger LOGGER = Logger.getLogger(CommandProcessor.class);    
     Command command;
-    CommandResult result;
+    ServerThread srvThread;
     
-    public CommandProcessor(Server server,Command command){
-        this.server=server;
+    
+    public CommandProcessor(ServerThread srvThread,Command command){        
+        this.srvThread=srvThread;
         this.command=command;
     }
     @Override
     public void run(){
+        LOGGER.debug("executing command:"+command.toString());
         CommandResult res=new CommandResult();
         res.serial=command.serial;
-        res.result=server.call(command.serviceName,command.methodName, command.params);        
+        res.result=srvThread.server.call(command.serviceName,command.methodName, command.params);
+        LOGGER.debug("finished execution:"+command.toString());
+        srvThread.write(res);
     }
     
-    public CommandResult execute(){
-        CommandResult res=new CommandResult();
-        res.serial=command.serial;
-        res.result=server.call(command.serviceName,command.methodName, command.params);        
-        return res;
-    }
 }
 

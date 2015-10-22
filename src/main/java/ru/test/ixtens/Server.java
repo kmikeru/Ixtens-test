@@ -8,7 +8,7 @@ import org.apache.log4j.Logger;
 /** @author mike */
 public class Server {
     private Map<String,Object> serviceMap=new HashMap();
-    final static Logger LOGGER = Logger.getLogger(SocketServer.class);
+    final static Logger LOGGER = Logger.getLogger(Server.class);
     
     public Server (){
         Properties props=new Properties();
@@ -32,7 +32,7 @@ public class Server {
     }
     
     public Object call(String serviceName,String methodName,Object[] params){
-                        
+        LOGGER.debug(String.format("executing: %s.%s(%s)",serviceName,methodName,params));
         Class[] cls=new Class[params.length];
         
         for(int i=0;i<params.length;i++){

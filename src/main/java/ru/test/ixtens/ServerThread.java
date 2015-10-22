@@ -1,5 +1,6 @@
 package ru.test.ixtens;
 
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -14,42 +15,51 @@ public class ServerThread implements Runnable{
     final static Logger LOGGER = Logger.getLogger(ServerThread.class);
     Server server;
     Socket socket;
+    ObjectOutputStream oos;
+    ObjectInputStream ois;
     
     public ServerThread(Server server,Socket socket){
-        this.server=server;        
+        
+        LOGGER.debug("ServerThread constructed");
+        this.server=server;
         this.socket=socket;
+        try {
+            this.oos = new ObjectOutputStream(socket.getOutputStream());
+            this.ois = new ObjectInputStream(socket.getInputStream());
+        } catch (IOException ex) {
+            LOGGER.debug(ex);
+        }
     }
     
     @Override
     public void run(){
+        LOGGER.debug("ServerThread run");
         try{
-            ObjectOutputStream oos = new ObjectOutputStream(socket.getOutputStream());
-            ObjectInputStream ois = new ObjectInputStream(socket.getInputStream());        
             while(true){                
-                    Command command=(Command) ois.readObject();
-                    LOGGER.debug("received command:"+command.serial);
+                Command command=(Command) ois.readObject();
+                LOGGER.debug("received command:"+command.toString());
                                     
-                    CommandProcessor cmdp=new CommandProcessor(server,command);
-                    CompletableFuture.supplyAsync(()-> cmdp.execute()).thenAccept((x)->{
-                        try {
-                            oos.writeObject(x);
-                        } catch (IOException ex) {
-                            LOGGER.error(ex);
-                        }
-                    } );
-                    //Thread commandThread=new Thread(cmdp);
-                    //commandThread.start();
-                    /*long t0=System.currentTimeMillis();                    
-                    long t1=System.currentTimeMillis();                    
-                    LOGGER.debug(String.format("elapsed:%d ms",(t1-t0)));*/
-                
-                    //oos.writeObject(res);
-                    //oos.flush();
+                CommandProcessor cmdp=new CommandProcessor(this,command);                    
+                Thread commandThread=new Thread(cmdp);
+                SocketServer.executor.execute(cmdp);
+                //commandThread.start();
             }
-                
-        } catch (Exception ex) {
+
+        } catch (EOFException ex) {
+            LOGGER.error("Connection closed");
+        }catch (Exception ex) {
             LOGGER.error(ex);
         }
         
+    }
+    
+    
+    synchronized public void write(CommandResult res){
+        try {            
+            oos.writeObject(res);
+            oos.flush();
+        } catch (IOException ex) {
+            LOGGER.error(ex);
+        }
     }
 }
