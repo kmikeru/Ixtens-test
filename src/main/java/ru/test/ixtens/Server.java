@@ -20,8 +20,9 @@ public class Server {
                     String serviceClassName = props.getProperty(serviceName);
                     LOGGER.debug(String.format("Read line from properties: %s -> %s",serviceName, serviceClassName));
                     Class serviceClass=getClass().getClassLoader().loadClass(serviceClassName);
+                    Object i = serviceClass.newInstance();
                     LOGGER.debug(String.format("Class loaded:%s",serviceClass));                    
-                    this.serviceMap.put(serviceName, serviceClass);
+                    this.serviceMap.put(serviceName, i);
                 }                
             }else{
                 throw new Exception("properties not loaded");
@@ -40,10 +41,10 @@ public class Server {
         }
         
         try {
-            Class c = (Class)serviceMap.get(serviceName);
+            Object serviceObject =serviceMap.get(serviceName);
+            Class c=serviceObject.getClass();
             Method m = c.getDeclaredMethod(methodName, cls);
-            Object i = c.newInstance();
-            Object r = m.invoke(i, params);
+            Object r = m.invoke(serviceObject, params);
             return r;
         } catch (Exception ex) {
             LOGGER.error(ex);

@@ -7,6 +7,10 @@ import org.apache.log4j.Logger;
 public class Service1 {
     final static Logger LOGGER = Logger.getLogger(Service1.class);
     
+    public Service1(){
+        LOGGER.debug("Constructor called");
+    }
+    
     public void sleep(Long millis) throws InterruptedException{
         LOGGER.debug(String.format("sleep(%d) called",millis));
         Thread.sleep(millis.longValue());
