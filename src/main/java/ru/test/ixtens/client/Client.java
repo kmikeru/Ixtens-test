@@ -4,6 +4,7 @@ import java.io.*;
 import java.net.*;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.locks.*;
 import org.apache.log4j.Logger;
 import ru.test.ixtens.Command;
 import ru.test.ixtens.CommandResult;
@@ -17,7 +18,8 @@ public class Client {
     Socket socket;
     ObjectInputStream ois;
     ObjectOutputStream oos;
-    Map<Integer,Future<CommandResult>> callState=new ConcurrentHashMap<>();
+    Map<Integer,CompletableFuture<CommandResult>> callState=new ConcurrentHashMap<>();
+    Lock writeLock=new ReentrantLock();
     
     public Client(String host, int port){
         this.host=host;
@@ -26,6 +28,10 @@ public class Client {
             socket=new Socket(host,port);
             ois = new ObjectInputStream(socket.getInputStream());
             oos = new ObjectOutputStream(socket.getOutputStream());
+            Thread dispatcherThread=new Thread(new ClientDispatcher());
+            dispatcherThread.setDaemon(true);
+            dispatcherThread.start();
+            
         }catch (IOException ex){
             LOGGER.error(ex);
         }
@@ -36,8 +42,12 @@ public class Client {
         LOGGER.debug(cmd.toString());
         CommandResult res;
         try{
+            callState.put(cmd.serial, new CompletableFuture<>());
+            writeLock.lock();
             oos.writeObject(cmd);
-            res=(CommandResult)ois.readObject();
+            writeLock.unlock();
+            Future<CommandResult> cf=callState.get(cmd.serial);
+            res=cf.get();            
             return res.result;
         }catch(Exception ex){
             LOGGER.error(ex);
@@ -45,9 +55,25 @@ public class Client {
         return null;
     }
     
-    public static void main(String[] args){
-        Client cl=new Client("localhost",2323);
-        cl.remoteCall("Service1", "sleep", new Object[]{3000L});       
-        
+    
+    
+    private class ClientDispatcher implements Runnable{        
+        @Override
+        public void run(){
+            LOGGER.debug("dispatcher thread started");
+            try{
+                while(true){
+                    CommandResult res=(CommandResult)ois.readObject();
+                    LOGGER.debug("got response:"+res);
+                    CompletableFuture<CommandResult> cf=callState.get(res.serial);
+                    cf.complete(res);
+                    callState.put(res.serial, cf);
+                }
+            } catch (Exception ex){
+                LOGGER.error(ex);
+            }
+        }
     }
+    
+    
 }

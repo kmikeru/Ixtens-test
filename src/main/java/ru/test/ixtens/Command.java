@@ -5,7 +5,7 @@ import java.util.Arrays;
 
 /** @author mike */
 public class Command implements Serializable{
-    Integer serial;
+    public Integer serial;
     String serviceName;
     String methodName;
     Object[] params;
