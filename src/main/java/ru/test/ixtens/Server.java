@@ -4,6 +4,7 @@ import java.io.*;
 import java.lang.reflect.Method;
 import java.util.*;
 import org.apache.log4j.Logger;
+import ru.test.ixtens.exceptions.NoMethodException;
 
 /** @author mike */
 public class Server {
@@ -32,7 +33,7 @@ public class Server {
         }
     }
     
-    public Object call(String serviceName,String methodName,Object[] params){
+    public Object call(String serviceName,String methodName,Object[] params) throws NoMethodException{
         LOGGER.debug(String.format("executing: %s.%s(%s)",serviceName,methodName,params));
         Class[] cls=new Class[params.length];
         
@@ -46,6 +47,9 @@ public class Server {
             Method m = c.getDeclaredMethod(methodName, cls);
             Object r = m.invoke(serviceObject, params);
             return r;
+        } catch(NoSuchMethodException ex){
+            LOGGER.error(ex);
+            throw new NoMethodException("No method found:"+methodName);
         } catch (Exception ex) {
             LOGGER.error(ex);
         }

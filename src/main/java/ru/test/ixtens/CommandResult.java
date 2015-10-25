@@ -6,4 +6,5 @@ import java.io.Serializable;
 public class CommandResult implements Serializable{
     public Integer serial;
     public Object result;
+    public Exception exception;
 }

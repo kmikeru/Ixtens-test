@@ -47,8 +47,12 @@ public class Client {
             oos.writeObject(cmd);
             writeLock.unlock();
             Future<CommandResult> cf=callState.get(cmd.serial);
-            res=cf.get();            
-            return res.result;
+            res=cf.get();
+            if(res.exception!=null){
+                throw res.exception;
+            }else{
+                return res.result;
+            }
         }catch(Exception ex){
             LOGGER.error(ex);
         }

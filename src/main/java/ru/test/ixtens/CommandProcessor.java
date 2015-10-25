@@ -1,5 +1,6 @@
 package ru.test.ixtens;
 import org.apache.log4j.Logger;
+import ru.test.ixtens.exceptions.NoMethodException;
 
 
 /** @author mike */
@@ -18,9 +19,14 @@ public class CommandProcessor implements Runnable{
         LOGGER.debug("executing command:"+command.toString());
         CommandResult res=new CommandResult();
         res.serial=command.serial;
-        res.result=srvThread.server.call(command.serviceName,command.methodName, command.params);
-        LOGGER.debug("finished execution:"+command.toString());
-        srvThread.write(res);
+        try{
+            res.result=srvThread.server.call(command.serviceName,command.methodName, command.params);
+            LOGGER.debug("finished execution:"+command.toString());
+            srvThread.write(res);
+        }catch(NoMethodException ex){
+            res.exception=ex;
+            srvThread.write(res);
+        }
     }
     
 }

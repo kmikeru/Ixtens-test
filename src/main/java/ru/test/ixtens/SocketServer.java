@@ -12,9 +12,14 @@ public class SocketServer {
     static ExecutorService executor = Executors.newFixedThreadPool(5);
     
     public static void main(String[] args){
+        int port=2323;
+        if(args.length>0){
+            port=Integer.parseInt(args[0]);
+        }
+        LOGGER.info("Listening port "+port);
         Server server=new Server();
         try {
-            ServerSocket sock = new ServerSocket(2323);
+            ServerSocket sock = new ServerSocket(port);
             while(true){
                 Socket s=sock.accept();
                 LOGGER.debug("accepted connection");

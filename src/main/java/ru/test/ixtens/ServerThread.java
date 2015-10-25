@@ -37,12 +37,10 @@ public class ServerThread implements Runnable{
         try{
             while(true){                
                 Command command=(Command) ois.readObject();
-                LOGGER.debug("received command:"+command.toString());
-                                    
+                LOGGER.debug("received command:"+command.toString());                                    
                 CommandProcessor cmdp=new CommandProcessor(this,command);                    
                 Thread commandThread=new Thread(cmdp);
                 SocketServer.executor.execute(cmdp);
-                //commandThread.start();
             }
 
         } catch (EOFException ex) {
